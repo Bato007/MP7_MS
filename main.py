@@ -7,42 +7,89 @@ width, height = screen_pixels*pixel_scale, screen_pixels*pixel_scale
 PLAYER = 0
 BALL = 1
 GOAL = 3
-GREEN = 999
-WHITE = 9999
+EMPTY = 999
+GOAL = 9999
 
-class Simulation(object):
-  def __init__(self, screen):
+WHITE = (255, 255, 255)
+GREEN = (35, 192, 56)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+class Player(object):
+  def __init__(self, x, y, matrix, screen):
+    self.x = x 
+    self.y = y
+    self.matrix = matrix
     self.screen = screen
-    self.modx = screen_pixels 
-    self.mody = screen_pixels
+  
+  def paintGreen(self):
+    self.screen.set_at((self.x, self.y), GREEN)
+    self.matrix[self.x][self.y] = EMPTY
+  
+  def updatePlayer(self):
+    self.screen.set_at((self.x, self.y), BLACK)
+    self.matrix[self.x][self.y] = BLACK
 
-  def moveUp(self, x, y, scale = 1):
+  def moveUp(self, scale = 1):
+    self.paintGreen()
+    self.y -= scale
+    self.updatePlayer()
     pass
   
-  def moveDown(self, x, y, scale = 1):
+  def moveDown(self, scale = 1):
+    self.paintGreen()
+    self.y += scale
+    self.updatePlayer()
+  
     pass
   
-  def moveRight(self, x, y, scale = 1):
+  def moveRight(self, scale = 1):
+    self.paintGreen()
+    self.x += scale
+    self.updatePlayer()
+
     pass
   
-  def moveLeft(self, x, y, scale = 1):
+  def moveLeft(self, scale = 1):
+    self.paintGreen()
+    self.x -= scale
+    self.updatePlayer()
+
+    pass
+
+class Ball(object):
+  def __init__(self, x, y, matrix, screen):
+    self.x = x 
+    self.y = y
+    self.matrix = matrix
+    self.screen = screen
+
+  def moveUp(self, scale = 1):
+    pass
+  
+  def moveDown(self, scale = 1):
+    pass
+  
+  def moveRight(self, scale = 1):
+    pass
+  
+  def moveLeft(self, scale = 1):
     pass
 
 
 def createHorizontalLine(xo, xf, y):
   for x in range(xo, xf):
-    game[x][y] = WHITE
+    game[x][y] = GOAL
 
 def createVerticalLine(yo, yf, x):
   for y in range(yo, yf):
-    game[x][y] = WHITE
+    game[x][y] = GOAL
 
 game = []
 def createInitialGame():
   for i in range(screen_pixels):
     new = []
     for j in range(screen_pixels):
-      new.append(999)
+      new.append(EMPTY)
     game.append(new)
 
   goalWidth = 10
@@ -72,27 +119,41 @@ win = pygame.display.set_mode((screen_pixels*pixel_scale, screen_pixels*pixel_sc
 screen = pygame.Surface((screen_pixels, screen_pixels))
 
 
+
+
 for x in range(len(game)):
   for y in range(len(game[x])):
-    if game[x][y] == GREEN:
-      screen.set_at((x, y), (35, 192, 56))
-    elif game[x][y] == WHITE:
-      screen.set_at((x, y), (255, 255, 255))
+    if game[x][y] == EMPTY:
+      screen.set_at((x, y), GREEN)
+    elif game[x][y] == GOAL:
+      screen.set_at((x, y), WHITE)
     elif game[x][y] == PLAYER:
-      screen.set_at((x, y), (0, 0, 0))
+      player = Player(
+        x,
+        y,
+        game,
+        screen
+      )
+      screen.set_at((x, y), BLACK)
     elif game[x][y] == BALL:
-      screen.set_at((x, y), (255, 0, 0))
+      ball = Ball(
+        x,
+        y,
+        game,
+        screen
+      )
+      screen.set_at((x, y), RED)
 
 win.blit(pygame.transform.scale(screen, win.get_rect().size), (0, 0))
-simulation = Simulation(
-  screen
-)
 
 run = True
 while run:
   for event in pygame.event.get():
       if event.type == pygame.QUIT:
           run = False
-
+  player.moveRight(5)
+  pygame.time.delay(10)
   pygame.display.update()
+  win.blit(pygame.transform.scale(screen, win.get_rect().size), (0, 0))
+
 pygame.quit()
