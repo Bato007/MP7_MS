@@ -63,17 +63,19 @@ class Ball(object):
     self.matrix = matrix
     self.screen = screen
 
-  def moveUp(self, scale = 1):
-    pass
+  def paintGreen(self):
+    self.screen.set_at((self.x, self.y), GREEN)
+    self.matrix[self.x][self.y] = EMPTY
   
-  def moveDown(self, scale = 1):
-    pass
-  
-  def moveRight(self, scale = 1):
-    pass
-  
-  def moveLeft(self, scale = 1):
-    pass
+  def updateBall(self):
+    self.screen.set_at((self.x, self.y), RED)
+    self.matrix[self.x][self.y] = RED
+
+  def move(self, x, y):
+    self.x = x
+    self.y = y
+    self.paintGreen()
+    self.updateBall()
 
 
 def createHorizontalLine(xo, xf, y):
@@ -118,9 +120,6 @@ pygame.init()
 win = pygame.display.set_mode((screen_pixels*pixel_scale, screen_pixels*pixel_scale))
 screen = pygame.Surface((screen_pixels, screen_pixels))
 
-
-
-
 for x in range(len(game)):
   for y in range(len(game[x])):
     if game[x][y] == EMPTY:
@@ -152,6 +151,7 @@ while run:
       if event.type == pygame.QUIT:
           run = False
   player.moveRight(5)
+  # ball.move(20, 20)
   pygame.time.delay(10)
   pygame.display.update()
   win.blit(pygame.transform.scale(screen, win.get_rect().size), (0, 0))
