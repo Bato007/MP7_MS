@@ -1,6 +1,8 @@
 import pygame
 
-width, height = 480, 480
+pixel_scale = 5
+screen_pixels = 100
+width, height = screen_pixels*pixel_scale, screen_pixels*pixel_scale
 
 PLAYER = 0
 BALL = 1
@@ -9,21 +11,10 @@ GREEN = 999
 WHITE = 9999
 
 class Simulation(object):
-  def __init__(self, screen, initial=None):
+  def __init__(self, screen):
     self.screen = screen
-    self.modx = width 
-    self.mody = height
-
-    for point in initial:
-      self.paint(point[0], point[1])
-
-  def paint(self, x, y, color=(255, 255, 255)):
-    px = x*pixel_len
-    py = y*pixel_len
-
-    for i in range(px, px+pixel_len):
-      for j in range(py, py+pixel_len):
-        self.screen.set_at((i, j), color)
+    self.modx = screen_pixels 
+    self.mody = screen_pixels
 
   def moveUp(self, x, y, scale = 1):
     pass
@@ -48,36 +39,38 @@ def createVerticalLine(yo, yf, x):
 
 game = []
 def createInitialGame():
-  for i in range(width):
+  for i in range(screen_pixels):
     new = []
-    for j in range(height):
+    for j in range(screen_pixels):
       new.append(999)
     game.append(new)
 
-  goalWidth = 60
-  linesHeight = 80
+  goalWidth = 10
+  linesHeight = 20
 
-  goalHeight = 200
-  goalCenter = int(height/2 - goalHeight/2)
+  goalHeight = 50
+  goalCenter = int(screen_pixels/2 - goalHeight/2)
 
-  createHorizontalLine(width-goalWidth, width, linesHeight)
-  createHorizontalLine(width-goalWidth, width, height-linesHeight)
-  createVerticalLine(linesHeight, height-linesHeight, width-goalWidth)
+  createHorizontalLine(screen_pixels-goalWidth, screen_pixels, linesHeight)
+  createHorizontalLine(screen_pixels-goalWidth, screen_pixels, screen_pixels-linesHeight)
+  createVerticalLine(linesHeight, screen_pixels-linesHeight, screen_pixels-goalWidth)
 
-  createVerticalLine(goalCenter, goalCenter + goalHeight, width-2)
-  createVerticalLine(goalCenter, goalCenter + goalHeight, width-1)
+  createVerticalLine(goalCenter, goalCenter + goalHeight, screen_pixels-2)
+  createVerticalLine(goalCenter, goalCenter + goalHeight, screen_pixels-1)
 
-  playerX = 6
-  gameCenter = int(height / 2)
+  playerX = 2
+  gameCenter = int(screen_pixels / 2)
   game[playerX][gameCenter] = PLAYER
   game[playerX + 10][gameCenter] = BALL
 
 
 
 createInitialGame()
-
 pygame.init()
-screen = pygame.display.set_mode((width, height))
+
+win = pygame.display.set_mode((screen_pixels*pixel_scale, screen_pixels*pixel_scale))
+screen = pygame.Surface((screen_pixels, screen_pixels))
+
 
 for x in range(len(game)):
   for y in range(len(game[x])):
@@ -86,19 +79,20 @@ for x in range(len(game)):
     elif game[x][y] == WHITE:
       screen.set_at((x, y), (255, 255, 255))
     elif game[x][y] == PLAYER:
-      screen.set_at((x, y), (0, 255, 0))
+      screen.set_at((x, y), (0, 0, 0))
+    elif game[x][y] == BALL:
+      screen.set_at((x, y), (255, 0, 0))
 
-pygame.display.flip()
-
-lines = []
-# # Porteria [17 - 27]
-
+win.blit(pygame.transform.scale(screen, win.get_rect().size), (0, 0))
 simulation = Simulation(
-  screen,
-  initial=lines,
+  screen
 )
 
-ITERATIONS = 100
-for _ in range(ITERATIONS):
-  pygame.time.delay(10)
-  pygame.display.flip()
+run = True
+while run:
+  for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+          run = False
+
+  pygame.display.update()
+pygame.quit()
