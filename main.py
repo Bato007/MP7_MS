@@ -1,14 +1,12 @@
 import pygame
-pixel_len = 12
-height_pixels = 45
-width_pixels = 40
-width, height = width_pixels*pixel_len, height_pixels*pixel_len
 
-def createHorizontalLine(xo, xf, y):
-  return [(x, y) for x in range(xo, xf)]
+width, height = 480, 480
 
-def createVerticalLine(yo, yf, x):
-  return [(x, y) for y in range(yo, yf)]
+PLAYER = 0
+BALL = 1
+GOAL = 3
+GREEN = 999
+WHITE = 9999
 
 class Simulation(object):
   def __init__(self, screen, initial=None):
@@ -27,33 +25,73 @@ class Simulation(object):
       for j in range(py, py+pixel_len):
         self.screen.set_at((i, j), color)
 
-  def moveUp(self, x, y):
+  def moveUp(self, x, y, scale = 1):
     pass
   
-  def moveUp(self, x, y):
+  def moveDown(self, x, y, scale = 1):
     pass
   
-  def moveUp(self, x, y):
+  def moveRight(self, x, y, scale = 1):
     pass
   
-  def moveUp(self, x, y):
+  def moveLeft(self, x, y, scale = 1):
     pass
+
+
+def createHorizontalLine(xo, xf, y):
+  for x in range(xo, xf):
+    game[x][y] = WHITE
+
+def createVerticalLine(yo, yf, x):
+  for y in range(yo, yf):
+    game[x][y] = WHITE
+
+game = []
+def createInitialGame():
+  for i in range(width):
+    new = []
+    for j in range(height):
+      new.append(999)
+    game.append(new)
+
+  goalWidth = 60
+  linesHeight = 80
+
+  goalHeight = 200
+  goalCenter = int(height/2 - goalHeight/2)
+
+  createHorizontalLine(width-goalWidth, width, linesHeight)
+  createHorizontalLine(width-goalWidth, width, height-linesHeight)
+  createVerticalLine(linesHeight, height-linesHeight, width-goalWidth)
+
+  createVerticalLine(goalCenter, goalCenter + goalHeight, width-2)
+  createVerticalLine(goalCenter, goalCenter + goalHeight, width-1)
+
+  playerX = 6
+  gameCenter = int(height / 2)
+  game[playerX][gameCenter] = PLAYER
+  game[playerX + 10][gameCenter] = BALL
+
+
+
+createInitialGame()
 
 pygame.init()
 screen = pygame.display.set_mode((width, height))
-screen.fill((35, 192, 56))
+
+for x in range(len(game)):
+  for y in range(len(game[x])):
+    if game[x][y] == GREEN:
+      screen.set_at((x, y), (35, 192, 56))
+    elif game[x][y] == WHITE:
+      screen.set_at((x, y), (255, 255, 255))
+    elif game[x][y] == PLAYER:
+      screen.set_at((x, y), (0, 255, 0))
+
 pygame.display.flip()
 
 lines = []
-
-# Loop
-lines.extend(createHorizontalLine(0, 15, 10))
-lines.extend(createVerticalLine(10, height_pixels-9, 15))
-lines.extend(createHorizontalLine(0, 15, height_pixels-10))
-
-# Porteria [17 - 27]
-lines.extend(createVerticalLine(17, 28, 0))
-lines.extend(createVerticalLine(17, 28, 1))
+# # Porteria [17 - 27]
 
 simulation = Simulation(
   screen,
