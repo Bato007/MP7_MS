@@ -1,4 +1,7 @@
 import pygame
+import numpy as np
+import skfuzzy as fuzz
+from skfuzzy import control as ctrl
 
 pixel_scale = 5
 screen_pixels = 100
@@ -85,6 +88,80 @@ def createHorizontalLine(xo, xf, y):
 def createVerticalLine(yo, yf, x):
   for y in range(yo, yf):
     game[x][y] = GOAL
+
+
+"""
+FUZZY LOGIC SETUP
+"""
+
+# Ball Finding
+## Inputs
+### Distance from player to ball, min is at ball, max is hypotenuse
+ball_distance = ctrl.Antecedent(np.arange(0, 142, 1), 'ball_dist')
+### Position of ball relative, behind is -100, forward is 100
+rel_position = ctrl.Antecedent(np.arange(-100, 100, 1), 'ball_pos')
+## Output
+output_speed = ctrl.Consequent(np.arange(5, 20, 5), 'output_speed')
+
+# Kick Strength
+## Inputs
+### The speed the player is approaching the ball
+player_speed = ctrl.Antecedent(np.arange(5, 20, 5), 'speed')
+### Distance from ball to goal
+goal_distance = ctrl.Antecedent(np.arange(0, 142, 1), 'goal_dist')
+## Output
+output_strength = ctrl.Consequent(np.arange(2, 20, 6), 'output_strength')
+
+
+# Membership functions
+ball_distance['near'] = fuzz.trimf(ball_distance.universe, [0, 0, 103])
+ball_distance['far'] = fuzz.trimf(ball_distance.universe, [39, 142, 142])
+# ball_distance.view()
+
+rel_position.automf(3)
+# rel_position.view()
+
+output_speed.automf(3)
+# output_speed.view()
+
+player_speed.automf(3)
+# player_speed.view()
+
+goal_distance['near'] = fuzz.trimf(goal_distance.universe, [0, 0, 103])
+goal_distance['far'] = fuzz.trimf(goal_distance.universe, [39, 142, 142])
+# goal_distance.view()
+
+output_strength.automf(3)
+# output_strength.view()
+
+
+# Rules
+## Set 1
+set1_rule1 = ctrl.Rule((rel_position['good'] & ball_distance['near']) | (rel_position['average'] & ball_distance['far']), output_speed['poor'])
+set1_rule2 = ctrl.Rule((rel_position['average'] & ball_distance['near']) | (rel_position['good'] & ball_distance['far']), output_speed['average'])
+set1_rule3 = ctrl.Rule((ball_distance['far'] | ball_distance['near']) & rel_position['poor'], output_speed['average'])
+
+## Set 2
+set2_rule1 = ctrl.Rule((player_speed['good'] & goal_distance['far']) | (player_speed['average'] & goal_distance['near']), output_strength['poor'])
+set2_rule2 = ctrl.Rule((player_speed['average'] & goal_distance['near']), output_strength['average'])
+set2_rule3 = ctrl.Rule((player_speed['average'] & goal_distance['far']) | (player_speed['good'] & goal_distance['near']), output_strength['average'])
+
+# Controles
+speed_ctrl = ctrl.ControlSystem([set1_rule1, set1_rule2, set1_rule3])
+strength_ctrl = ctrl.ControlSystem([set2_rule1, set2_rule2, set2_rule3])
+
+#Simulators
+speed = ctrl.ControlSystemSimulation(speed_ctrl)
+strength = ctrl.ControlSystemSimulation(strength_ctrl)
+
+speed.input['ball_dist'] = 98
+speed.input['ball_pos'] = 15
+speed.compute()
+
+print(speed.output['output_speed'])
+
+# wait = input('press')
+
 
 game = []
 def createInitialGame():
