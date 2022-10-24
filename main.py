@@ -255,7 +255,7 @@ while run:
     if ballx < playx:
       player.moveLeft(int(move_amount))
     elif ballx > playx:
-      player.moveLeft(int(move_amount))
+      player.moveRight(int(move_amount))
     if bally < playy:
       player.moveUp(int(move_amount))
     elif bally > playy:
