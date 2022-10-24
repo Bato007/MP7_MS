@@ -108,7 +108,7 @@ ball_distance = ctrl.Antecedent(np.arange(0, 142, 1), 'ball_dist')
 ### Position of ball relative, behind is -100, forward is 100
 rel_position = ctrl.Antecedent(np.arange(-100, 100, 1), 'ball_pos')
 ## Output
-output_speed = ctrl.Consequent(np.arange(5, 20, 5), 'output_speed')
+output_speed = ctrl.Consequent(np.arange(1, 20, 1), 'output_speed')
 
 # Kick Strength
 ## Inputs
@@ -117,7 +117,7 @@ player_speed = ctrl.Antecedent(np.arange(5, 20, 5), 'speed')
 ### Distance from ball to goal
 goal_distance = ctrl.Antecedent(np.arange(0, 142, 1), 'goal_dist')
 ## Output
-output_strength = ctrl.Consequent(np.arange(2, 20, 6), 'output_strength')
+output_strength = ctrl.Consequent(np.arange(1, 10, 1), 'output_strength')
 
 
 # Membership functions
