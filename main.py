@@ -1,4 +1,5 @@
 import pygame
+import math
 import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
@@ -59,6 +60,9 @@ class Player(object):
 
     pass
 
+  def getPos(self):
+    return self.x, self.y
+
 class Ball(object):
   def __init__(self, x, y, matrix, screen):
     self.x = x 
@@ -79,6 +83,9 @@ class Ball(object):
     self.y = y
     self.paintGreen()
     self.updateBall()
+
+  def getPos(self):
+    return self.x, self.y
 
 
 def createHorizontalLine(xo, xf, y):
@@ -154,12 +161,6 @@ strength_ctrl = ctrl.ControlSystem([set2_rule1, set2_rule2, set2_rule3])
 speed = ctrl.ControlSystemSimulation(speed_ctrl)
 strength = ctrl.ControlSystemSimulation(strength_ctrl)
 
-speed.input['ball_dist'] = 98
-speed.input['ball_pos'] = 15
-speed.compute()
-
-print(speed.output['output_speed'])
-
 # wait = input('press')
 
 
@@ -222,12 +223,44 @@ for x in range(len(game)):
 
 win.blit(pygame.transform.scale(screen, win.get_rect().size), (0, 0))
 
+move_speed = 0
+move_strength = 0
+
 run = True
 while run:
   for event in pygame.event.get():
       if event.type == pygame.QUIT:
           run = False
-  player.moveRight(5)
+
+  ballx, bally = ball.getPos()
+  playx, playy = player.getPos()
+
+  distance = math.sqrt(abs(ballx - playx)**2 + abs(bally - playy)**2)
+  if distance < 2:
+    strength.input['speed'] = move_speed
+    strength.input['goal_dist'] = math.sqrt(abs(ballx - 99)**2 + abs(bally - 50)**2)
+    strength.compute()
+    move_strength = strength.output['output_strength']
+    move_amount = math.sqrt(move_strength**2 / 2)
+    if ballx > 50:
+      ball.move(ballx + move_amount, bally + move_amount)
+    else:
+      ball.move(ballx + move_amount, bally - move_amount)
+  else:
+    speed.input['ball_dist'] = distance
+    speed.input['ball_pos'] = ballx - playx
+    speed.compute()
+    move_speed = speed.output['output_speed']
+    move_amount = math.sqrt(move_speed**2 / 2)
+    if ballx < playx:
+      player.moveLeft(int(move_amount))
+    elif ballx > playx:
+      player.moveLeft(int(move_amount))
+    if bally < playy:
+      player.moveUp(int(move_amount))
+    elif bally > playy:
+      player.moveDown(int(move_amount))
+  #player.moveRight(5)
   # ball.move(20, 20)
   pygame.time.delay(10)
   pygame.display.update()
