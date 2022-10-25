@@ -65,28 +65,29 @@ class Player(object):
 
 class Ball(object):
   def __init__(self, x, y, matrix, screen):
+    self.prev_color = GREEN
     self.x = x 
     self.y = y
     self.matrix = matrix
     self.screen = screen
 
   def paintGreen(self):
-    self.screen.set_at((self.x, self.y), GREEN)
+    self.screen.set_at((self.x, self.y), self.prev_color)
     self.matrix[self.x][self.y] = EMPTY
   
   def updateBall(self):
+    self.prev_color = self.screen.get_at((self.x, self.y))
     self.screen.set_at((self.x, self.y), RED)
     self.matrix[self.x][self.y] = RED
 
   def move(self, x, y):
-    self.x = x
-    self.y = y
     self.paintGreen()
+    self.x = x 
+    self.y = y 
     self.updateBall()
 
   def getPos(self):
     return self.x, self.y
-
 
 def createHorizontalLine(xo, xf, y):
   for x in range(xo, xf):
@@ -95,7 +96,6 @@ def createHorizontalLine(xo, xf, y):
 def createVerticalLine(yo, yf, x):
   for y in range(yo, yf):
     game[x][y] = GOAL
-
 
 """
 FUZZY LOGIC SETUP
@@ -119,7 +119,6 @@ goal_distance = ctrl.Antecedent(np.arange(0, 142, 1), 'goal_dist')
 ## Output
 output_strength = ctrl.Consequent(np.arange(1, 10, 1), 'output_strength')
 
-
 # Membership functions
 ball_distance['near'] = fuzz.trimf(ball_distance.universe, [0, 0, 103])
 ball_distance['far'] = fuzz.trimf(ball_distance.universe, [39, 142, 142])
@@ -141,7 +140,6 @@ goal_distance['far'] = fuzz.trimf(goal_distance.universe, [39, 142, 142])
 output_strength.automf(3)
 # output_strength.view()
 
-
 # Rules
 ## Set 1
 set1_rule1 = ctrl.Rule((rel_position['good'] & ball_distance['near']) | (rel_position['average'] & ball_distance['far']), output_speed['poor'])
@@ -161,14 +159,11 @@ strength_ctrl = ctrl.ControlSystem([set2_rule1, set2_rule2, set2_rule3])
 speed = ctrl.ControlSystemSimulation(speed_ctrl)
 strength = ctrl.ControlSystemSimulation(strength_ctrl)
 
-# wait = input('press')
-
-
 game = []
 def createInitialGame():
-  for i in range(screen_pixels):
+  for _ in range(screen_pixels):
     new = []
-    for j in range(screen_pixels):
+    for _ in range(screen_pixels):
       new.append(EMPTY)
     game.append(new)
 
@@ -189,8 +184,6 @@ def createInitialGame():
   gameCenter = int(screen_pixels / 2)
   game[playerX][gameCenter] = PLAYER
   game[playerX + 10][gameCenter] = BALL
-
-
 
 createInitialGame()
 pygame.init()
@@ -227,43 +220,60 @@ move_speed = 0
 move_strength = 0
 
 run = True
-while run:
-  for event in pygame.event.get():
-      if event.type == pygame.QUIT:
-          run = False
+try:
+  while run:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
 
-  ballx, bally = ball.getPos()
-  playx, playy = player.getPos()
+    ballx, bally = ball.getPos()
+    playx, playy = player.getPos()
 
-  distance = math.sqrt(abs(ballx - playx)**2 + abs(bally - playy)**2)
-  if distance < 2:
-    strength.input['speed'] = move_speed
-    strength.input['goal_dist'] = math.sqrt(abs(ballx - 99)**2 + abs(bally - 50)**2)
-    strength.compute()
-    move_strength = strength.output['output_strength']
-    move_amount = math.sqrt(move_strength**2 / 2)
-    if ballx > 50:
-      ball.move(ballx + move_amount, bally + move_amount)
+    distance = math.sqrt(abs(ballx - playx)**2 + abs(bally - playy)**2)
+    if distance < 2:
+      strength.input['speed'] = move_speed
+      strength.input['goal_dist'] = math.sqrt(abs(ballx - 99)**2 + abs(bally - 50)**2)
+      strength.compute()
+      move_strength = strength.output['output_strength']
+      move_amount = math.sqrt(move_strength**2 / 2)
+
+      ballx_move = math.ceil(ballx + move_amount)
+      if ballx > 50:
+        bally_move = math.ceil(bally + move_amount)
+        ball.move(ballx_move, bally_move)
+      else:
+        bally_move = math.ceil(bally - move_amount)
+        ball.move(ballx_move, bally_move)
     else:
-      ball.move(ballx + move_amount, bally - move_amount)
-  else:
-    speed.input['ball_dist'] = distance
-    speed.input['ball_pos'] = ballx - playx
-    speed.compute()
-    move_speed = speed.output['output_speed']
-    move_amount = math.sqrt(move_speed**2 / 2)
-    if ballx < playx:
-      player.moveLeft(int(move_amount))
-    elif ballx > playx:
-      player.moveRight(int(move_amount))
-    if bally < playy:
-      player.moveUp(int(move_amount))
-    elif bally > playy:
-      player.moveDown(int(move_amount))
-  #player.moveRight(5)
-  # ball.move(20, 20)
-  pygame.time.delay(10)
-  pygame.display.update()
-  win.blit(pygame.transform.scale(screen, win.get_rect().size), (0, 0))
+      speed.input['ball_dist'] = distance
+      speed.input['ball_pos'] = ballx - playx
+      speed.compute()
+      move_speed = speed.output['output_speed']
+      move_amount = math.sqrt(move_speed**2 / 2)
 
-pygame.quit()
+      # Safe movement
+      movex = move_amount
+      movey = move_amount
+
+      if (movex >= abs(playx - ballx)): movex = abs(playx - ballx) - 1
+      if (movey >= abs(playy - bally)): movey = abs(playy - bally) - 1
+
+      if ballx < playx:
+        player.moveLeft(int(movex))
+      elif ballx > playx:
+        player.moveRight(int(movex))
+
+      if bally < playy:
+        player.moveUp(int(movey))
+      elif bally > playy:
+        player.moveDown(int(movey))
+    
+    pygame.time.delay(100)
+    pygame.display.update()
+    win.blit(pygame.transform.scale(screen, win.get_rect().size), (0, 0))
+except:
+  print('#'*60)
+  print('\t\t You Win!')
+  print('#'*60)
+finally:
+  pygame.quit()
